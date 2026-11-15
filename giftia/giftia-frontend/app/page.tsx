@@ -10,13 +10,15 @@ import { searchGifts, type Gift } from "@/lib/api";
 
 export default function Home() {
   // ① 状態（変化するデータ）を覚える箱
-  const [mode, setMode] = useState<"standard" | "business">("standard"); // どのタブか
+  const [mode, setMode] = useState<"standard" | "business" | "farewell">("standard"); // どのタブか
   const [keyword, setKeyword] = useState("");                             // 入力した言葉
   const [category, setCategory] = useState("");                           // 選んだカテゴリー
   const [indivWrap, setIndivWrap] = useState(false); // 個包装だけ（取引先へのお礼）
   const [priceBand, setPriceBand] = useState("");                         // 価格帯（取引先へのお礼）
   const [results, setResults] = useState<Gift[] | null>(null);            // 検索結果
   const [error, setError] = useState("");                                 // つながらないときの文言
+  const [gender, setGender] = useState("all"); // 性別（送別）
+  const [ageband, setAgeband] = useState(""); // 年齢層（送別）
   const [loading, setLoading] = useState(false);//【自分で追加】読み込み中かどうか、初期はfalse
 
   // ② 検索ボタンの処理（API に聞くので、結果が返るまで待つ＝async/await）
@@ -26,8 +28,9 @@ export default function Home() {
     setLoading(true);//【自分で追加】読み込み中はtrue
     // いま開いているタブの条件だけを送る（もう一方のタブの入力は送らない）
     const condition = mode === "standard"
-      ? { keyword, category, indivWrap: false, priceBand: "" }
-      : { keyword: "", category: "", indivWrap, priceBand };
+      ? { keyword, category, indivWrap: false, priceBand: "" , gender: "all", ageband: ""}
+      : mode === "business" ? { keyword: "", category: "", indivWrap, priceBand, gender: "all", ageband: ""}
+      : { keyword: "", category: "", indivWrap: false, priceBand: "" , gender, ageband};
     try {
       setResults(await searchGifts(condition));
     } catch (err) {
@@ -39,13 +42,15 @@ export default function Home() {
     }//【自分で追加】検索終了後にfalse
   }
 
-  function onReset() {
+  function onReset(){
   setKeyword("");
   setCategory("");
   setIndivWrap(false);
   setPriceBand("");
   setResults(null);
   setError("");
+  setGender("all");
+  setAgeband("");
   }//【自分で追加】
 
   // ③ 画面
@@ -57,10 +62,11 @@ export default function Home() {
       <nav className="modes">
         <button className={mode === "standard" ? "on" : ""} onClick={() => { setMode("standard"); setResults(null); }}>いまの検索</button>
         <button className={mode === "business" ? "on" : ""} onClick={() => { setMode("business"); setResults(null); }}>取引先へのお礼</button>
+        <button className={mode === "farewell" ? "on" : ""} onClick={() => { setMode("farewell"); setResults(null); }}>送別検索</button>
       </nav>
 
       <form className="form" onSubmit={onSearch}>
-        {mode === "standard" ? (
+        {mode === "standard" && (
           <>
             <input className="q" value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder="キーワード（例：送別 お菓子）" />
             <select value={category} onChange={(e) => setCategory(e.target.value)}>
@@ -71,13 +77,32 @@ export default function Home() {
               <option value="飲料">飲料</option>{/*【自分で追加】*/}
             </select>
           </>
-        ) : (
+        )}
+        {mode === "business" && (
           <>
             <label className="chk"><input type="checkbox" checked={indivWrap} onChange={(e) => setIndivWrap(e.target.checked)} /> 個包装</label>
             <select value={priceBand} onChange={(e) => setPriceBand(e.target.value)}>
               <option value="">すべての価格帯</option>
               <option value="3000">3,000〜5,000円</option>
               <option value="5000">5,000〜10,000円</option>
+            </select>
+          </>
+        )}
+        {mode === "farewell" && (
+          <>
+          <span style={{marginRight: "20px"}}>属性検索</span>
+            <select value={gender} onChange={(e) => setGender(e.target.value)}>
+              <option value="all">すべての性別</option>
+              <option value="male">男性</option>
+              <option value="female">女性</option>
+            </select>
+            <select value={ageband} onChange={(e) => setAgeband(e.target.value)}>
+              <option value="">すべての年齢</option>
+              <option value="10">10代</option>
+              <option value="20">20代</option>
+              <option value="30">30代</option>
+              <option value="40">40代</option>
+              <option value="50">50代以上</option>
             </select>
           </>
         )}
