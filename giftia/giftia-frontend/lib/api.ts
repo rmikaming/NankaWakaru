@@ -36,7 +36,7 @@ export async function searchGifts(c: SearchCondition): Promise<Gift[]> {
   if (c.indivWrap) params.set("indiv_wrap", "true");
   if (c.priceBand === "3000") { params.set("price_min", "3000"); params.set("price_max", "4999"); } // 3,000以上 5,000未満
   if (c.priceBand === "5000") { params.set("price_min", "5000"); params.set("price_max", "9999"); } // 5,000以上 10,000未満
-  if (c.gender) params.set("gender", c.gender);
+  if (c.gender && c.gender !== "all") params.set("gender", c.gender);//"all" は送らないようにしています。ageband は空文字のとき偽になるので、そのまま
   if (c.ageband) params.set("ageband", c.ageband);
 
   // ② fetch で API を呼ぶ（通信が終わるまで待つ＝await）
