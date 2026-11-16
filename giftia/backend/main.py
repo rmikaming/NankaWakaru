@@ -8,7 +8,7 @@
 # 確認：http://localhost:8000/docs（Swagger UI。ブラウザから API を試せる）
 
 import os
-
+from typing import Literal#11/15_かずや追記
 from dotenv import load_dotenv
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,6 +18,7 @@ from database import fetch_all
 load_dotenv()  # .env を読む（DB の接続情報・CORS の許可）
 
 app = FastAPI(title="Giftia Search API（2週目）")
+GENDER_VALUE = {"male": 1, "female": 2}   # DB: 0=共通, 1=男性, 2=女性 　11/15_かずや
 
 # ── CORS ───────────────────────────────────────
 # 画面（http://localhost:3000）と API（http://localhost:8000）は別のアプリ＝オリジンが違う。
@@ -41,6 +42,8 @@ def search(
     indiv_wrap: bool = Query(default=False, description="true なら、説明文に「個包装」とある商品だけ"),
     price_min: int | None = Query(default=None, ge=0, description="価格の下限（以上）"),
     price_max: int | None = Query(default=None, ge=0, description="価格の上限（以下）"),
+    gender: Literal["all", "male", "female"] = Query(default="all", description="性別"),#引数の追加:11/15_かずや
+    ageband: Literal["", "10", "20", "30", "40", "50"] = Query(default="", description="年代"),#引数の追加:11/15_かずや
     limit: int = Query(default=20, ge=1, le=100, description="返す件数"),
 ):
     """条件に合う商品を、人気順（直近1年の販売数）で上位 limit 件返す"""
@@ -61,6 +64,17 @@ def search(
     if price_max is not None:
         where.append("price <= %s")
         params.append(price_max)
+    if gender != "all": #「性別」が指定されたときだけ、検索条件(WHERE)を1つずつ足す:11/15_かずや
+        where.append("""EXISTS (SELECT 1 FROM product_recommend_tag t
+        WHERE t.product_id = products.product_id
+        AND t.attribute_type = 'gender' AND t.attribute_value IN (0, %s))""")
+        params.append(GENDER_VALUE[gender])   # 共通(0)も含める
+    if ageband:#「年代」が指定されたときだけ、検索条件(WHERE)を1つずつ足す:11/15_かずや
+        where.append("""EXISTS (SELECT 1 FROM product_recommend_tag t
+        WHERE t.product_id = products.product_id
+        AND t.attribute_type = 'age' AND t.attribute_value = %s)""")
+        params.append(int(ageband))
+
     condition = " AND ".join(where)
 
     # ② 件数と、人気順の上位 limit 件を取る
