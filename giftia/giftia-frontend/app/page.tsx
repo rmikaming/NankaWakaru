@@ -19,6 +19,9 @@ export default function Home() {
   const [error, setError] = useState("");                                 // つながらないときの文言
   const [gender, setGender] = useState("all"); // 性別（送別）
   const [ageband, setAgeband] = useState(""); // 年齢層（送別）
+  const [safeGift, setSafeGift] = useState(false); //好みに左右（送別）
+  const [likes, setLikes] = useState(""); //好きなもの（送別）
+  const [dislikes, setDislikes] = useState(""); //嫌いなもの（送別）
   const [loading, setLoading] = useState(false);//【自分で追加】読み込み中かどうか、初期はfalse
 
   // ② 検索ボタンの処理（API に聞くので、結果が返るまで待つ＝async/await）
@@ -28,9 +31,9 @@ export default function Home() {
     setLoading(true);//【自分で追加】読み込み中はtrue
     // いま開いているタブの条件だけを送る（もう一方のタブの入力は送らない）
     const condition = mode === "standard"
-      ? { keyword, category, indivWrap: false, priceBand: "" , gender: "all", ageband: ""}
-      : mode === "business" ? { keyword: "", category: "", indivWrap, priceBand, gender: "all", ageband: ""}
-      : { keyword: "", category: "", indivWrap: false, priceBand: "" , gender, ageband};
+      ? { keyword, category, indivWrap: false, priceBand: "" , gender: "all", ageband: "", safeGift: false, likes: "", dislikes: ""}
+      : mode === "business" ? { keyword: "", category: "", indivWrap, priceBand, gender: "all", ageband: "", safeGift: false, likes: "", dislikes: ""}
+      : { keyword: "", category: "", indivWrap: false, priceBand: "" , gender, ageband, safeGift, likes, dislikes};
     try {
       setResults(await searchGifts(condition));
     } catch (err) {
@@ -51,6 +54,9 @@ export default function Home() {
   setError("");
   setGender("all");
   setAgeband("");
+  setSafeGift(false);
+  setLikes("");
+  setDislikes("");
   }//【自分で追加】
 
   // ③ 画面
@@ -89,29 +95,50 @@ export default function Home() {
           </>
         )}
         {mode === "farewell" && (
-          <>
-          <span style={{marginRight: "20px"}}>属性検索</span>
-            <select value={gender} onChange={(e) => setGender(e.target.value)}>
-              <option value="all">すべての性別</option>
-              <option value="male">男性</option>
-              <option value="female">女性</option>
-            </select>
-            <select value={ageband} onChange={(e) => setAgeband(e.target.value)}>
-              <option value="">すべての年齢</option>
-              <option value="10">10代</option>
-              <option value="20">20代</option>
-              <option value="30">30代</option>
-              <option value="40">40代</option>
-              <option value="50">50代以上</option>
-            </select>
-          </>
+          <div>
+            <div>
+              <span style={{marginRight: "20px"}}>属性検索</span>
+              <select value={gender} onChange={(e) => setGender(e.target.value)}>
+                <option value="all">すべての性別</option>
+                <option value="male">男性</option>
+                <option value="female">女性</option>
+              </select>
+              <select value={ageband} onChange={(e) => setAgeband(e.target.value)}>
+                <option value="">すべての年齢</option>
+                <option value="10">10代</option>
+                <option value="20">20代</option>
+                <option value="30">30代</option>
+                <option value="40">40代</option>
+                <option value="50">50代以上</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="chk">
+                <input
+                  type="checkbox"
+                  checked={safeGift}
+                  onChange={(e) => setSafeGift(e.target.checked)}
+                />
+                好みに左右されにくい
+              </label>
+            </div>
+
+            <div>
+              <input className="q" style={{ width: "500px" }} value={likes} onChange={(e) => setLikes(e.target.value)} placeholder="好きなもの（例：紅茶 ジュース）" />
+            </div>
+
+            <div>
+              <input className="q" style={{ width: "500px" }} value={dislikes} onChange={(e) => setDislikes(e.target.value)} placeholder="嫌いなもの（例：ビール コーヒー）" />
+            </div>
+          </div>
         )}
         <button type="submit">検索</button>
       </form>
 
-      <form onSubmit={onReset}>
-        <button type="submit">リセット</button>
-      </form>{/*【自分で追加リセットボタン】*/}
+      <button type="button" onClick={onReset}>
+        リセット
+      </button>
 
       {loading && <p className="summary">🔍 検索中...</p>}{/*【自分で追加】setloadingがtrueで出現*/}
 
