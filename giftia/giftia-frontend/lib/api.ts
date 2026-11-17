@@ -22,6 +22,9 @@ export type SearchCondition = {
   priceBand: string;  // 取引先へのお礼："" | "3000" | "5000"
   gender:string; //送別："all" | "male" | "female"
   ageband:string; //送別："" | "10" | "20" | "30" | "40" | "50"
+  safeGift:boolean; //送別:true | false
+  likes: string;    // 送別：好きなもの
+  dislikes: string;    // 送別：嫌いなもの
 };
 
 // API の場所。NEXT_PUBLIC_ の値はブラウザに配られる＝秘密は置かない（.env.local に書く）
@@ -38,6 +41,9 @@ export async function searchGifts(c: SearchCondition): Promise<Gift[]> {
   if (c.priceBand === "5000") { params.set("price_min", "5000"); params.set("price_max", "9999"); } // 5,000以上 10,000未満
   if (c.gender && c.gender !== "all") params.set("gender", c.gender);//"all" は送らないようにしています。ageband は空文字のとき偽になるので、そのまま
   if (c.ageband) params.set("ageband", c.ageband);
+  if (c.safeGift) params.set("safeGift", "true");
+  if (c.likes) params.set("likes", c.likes);
+  if (c.dislikes) params.set("dislikes", c.dislikes);
 
   // ② fetch で API を呼ぶ（通信が終わるまで待つ＝await）
   const res = await fetch(`${API}/api/search?${params.toString()}`);
