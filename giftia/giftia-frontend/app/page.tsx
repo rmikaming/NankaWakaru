@@ -4,36 +4,38 @@
 // 1週目との違い：①searchGifts が FastAPI を呼ぶ（async/await）②入力した条件を渡す ③つながらないときの表示
 "use client"; // ← ブラウザで動く合図。useState や onClick を使う画面に必要
 
-import { useState } from "react";
+import React, { useState } from "react";
 import ResultCard from "./ResultCard";
 import { searchGifts, type Gift } from "@/lib/api";
 
 export default function Home() {
   // ① 状態（変化するデータ）を覚える箱
   const [mode, setMode] = useState<"standard" | "business" | "farewell">("standard"); // どのタブか
+  const [step, setStep] = useState(1);//送別診断順番に質問コーナー
   const [keyword, setKeyword] = useState("");                             // 入力した言葉
   const [category, setCategory] = useState("");                           // 選んだカテゴリー
-  const [indivWrap, setIndivWrap] = useState(false); // 個包装だけ（取引先へのお礼）
-  const [priceBand, setPriceBand] = useState("");                         // 価格帯（取引先へのお礼）
+  const [indivWrap, setIndivWrap] = useState(false); // 個包装だけ（取引先へのお礼）（送別）
+  const [priceBand, setPriceBand] = useState("");                         // 価格帯（取引先へのお礼）（送別）
   const [results, setResults] = useState<Gift[] | null>(null);            // 検索結果
   const [error, setError] = useState("");                                 // つながらないときの文言
   const [gender, setGender] = useState("all"); // 性別（送別）
   const [ageband, setAgeband] = useState(""); // 年齢層（送別）
-  const [safeGift, setSafeGift] = useState(false); //好みに左右（送別）
+  const [relationship, setRelationship] = useState(""); // 関係性（送別）
   const [likes, setLikes] = useState(""); //好きなもの（送別）
   const [dislikes, setDislikes] = useState(""); //嫌いなもの（送別）
+  const [mildScent, setMildScent] = useState(false); //香りが弱い（送別）
+  const [nonFood, setNonFood] = useState(false); //食品以外（送別）
   const [loading, setLoading] = useState(false);//【自分で追加】読み込み中かどうか、初期はfalse
 
   // ② 検索ボタンの処理（API に聞くので、結果が返るまで待つ＝async/await）
-  async function onSearch(e: React.FormEvent) {
-    e.preventDefault(); // ページの再読み込みを止める
+  async function runSearch() {
     setError("");
     setLoading(true);//【自分で追加】読み込み中はtrue
     // いま開いているタブの条件だけを送る（もう一方のタブの入力は送らない）
     const condition = mode === "standard"
-      ? { keyword, category, indivWrap: false, priceBand: "" , gender: "all", ageband: "", safeGift: false, likes: "", dislikes: ""}
-      : mode === "business" ? { keyword: "", category: "", indivWrap, priceBand, gender: "all", ageband: "", safeGift: false, likes: "", dislikes: ""}
-      : { keyword: "", category: "", indivWrap: false, priceBand: "" , gender, ageband, safeGift, likes, dislikes};
+      ? { keyword, category, indivWrap: false, priceBand: "" , gender: "all", ageband: "", relationship: "", likes: "", dislikes: "", mildScent: false, nonFood: false}
+      : mode === "business" ? { keyword: "", category: "", indivWrap, priceBand, gender: "all", ageband: "", relationship: "", likes: "", dislikes: "", mildScent: false, nonFood: false}
+      : { keyword: "", category: "", indivWrap, priceBand, gender, ageband, relationship, likes, dislikes, mildScent, nonFood};
     try {
       setResults(await searchGifts(condition));
     } catch (err) {
@@ -45,6 +47,12 @@ export default function Home() {
     }//【自分で追加】検索終了後にfalse
   }
 
+  async function onSearch(e: React.FormEvent) {
+    e.preventDefault();// ページの再読み込みを止める
+    await runSearch();
+  }
+
+
   function onReset(){
   setKeyword("");
   setCategory("");
@@ -54,9 +62,10 @@ export default function Home() {
   setError("");
   setGender("all");
   setAgeband("");
-  setSafeGift(false);
+  setRelationship("");
   setLikes("");
   setDislikes("");
+  setStep(1);
   }//【自分で追加】
 
   // ③ 画面
@@ -66,9 +75,9 @@ export default function Home() {
 
       {/* タブ：state(mode)＋条件で出し分ける */}
       <nav className="modes">
-        <button className={mode === "standard" ? "on" : ""} onClick={() => { setMode("standard"); setResults(null); }}>いまの検索</button>
-        <button className={mode === "business" ? "on" : ""} onClick={() => { setMode("business"); setResults(null); }}>取引先へのお礼</button>
-        <button className={mode === "farewell" ? "on" : ""} onClick={() => { setMode("farewell"); setResults(null); }}>送別検索</button>
+        <button className={mode === "standard" ? "on" : ""} onClick={() => { setMode("standard"); onReset(); }}>いまの検索</button>
+        <button className={mode === "business" ? "on" : ""} onClick={() => { setMode("business"); onReset(); }}>取引先へのお礼</button>
+        <button className={mode === "farewell" ? "on" : ""} onClick={() => { setMode("farewell"); onReset(); }}>送別おまかせ診断</button>
       </nav>
 
       <form className="form" onSubmit={onSearch}>
@@ -96,49 +105,108 @@ export default function Home() {
         )}
         {mode === "farewell" && (
           <div>
-            <div>
-              <span style={{marginRight: "20px"}}>属性検索</span>
-              <select value={gender} onChange={(e) => setGender(e.target.value)}>
-                <option value="all">すべての性別</option>
-                <option value="male">男性</option>
-                <option value="female">女性</option>
-              </select>
-              <select value={ageband} onChange={(e) => setAgeband(e.target.value)}>
-                <option value="">すべての年齢</option>
-                <option value="10">10代</option>
-                <option value="20">20代</option>
-                <option value="30">30代</option>
-                <option value="40">40代</option>
-                <option value="50">50代以上</option>
-              </select>
-            </div>
 
-            <div>
-              <label className="chk">
-                <input
-                  type="checkbox"
-                  checked={safeGift}
-                  onChange={(e) => setSafeGift(e.target.checked)}
-                />
-                好みに左右されにくい
-              </label>
-            </div>
+{/*ここから追加分 */}
 
-            <div>
-              <input className="q" style={{ width: "500px" }} value={likes} onChange={(e) => setLikes(e.target.value)} placeholder="好きなもの（例：紅茶 ジュース）" />
-            </div>
+                {step === 1 && (
+                  <div>
+                    <p>予算は？</p>
 
-            <div>
-              <input className="q" style={{ width: "500px" }} value={dislikes} onChange={(e) => setDislikes(e.target.value)} placeholder="嫌いなもの（例：ビール コーヒー）" />
-            </div>
+                    <button type="button" onClick={() => {setPriceBand(""); setStep(2);}}>すべての価格帯</button>
+                    <button type="button" onClick={() => {setPriceBand("0"); setStep(2);}}>〜3,000円</button>
+                    <button type="button" onClick={() => {setPriceBand("3000"); setStep(2);}}>3,000〜5,000円</button>
+                    <button type="button" onClick={() => {setPriceBand("5000"); setStep(2);}}>5,000〜10,000円</button>
+                    <button type="button" onClick={() => {setPriceBand("10000"); setStep(2);}}>10,000〜</button>
+                  </div>
+                )}
+
+                {step === 2 && (
+                  <div>
+                    <p>相手の性別は？</p>
+
+                    <button type="button" onClick={() => {setGender("all"); setStep(3);}}>指定しない</button>
+                    <button type="button" onClick={() => {setGender("male"); setStep(3);}}>男性</button>
+                    <button type="button" onClick={() => {setGender("female"); setStep(3);}}>女性</button>
+                  </div>
+                )}
+
+                  {step === 3 && (
+                    <div>
+                      <p>年齢層は？</p>
+
+                      <button type="button" onClick={() => {setAgeband(""); setStep(4);}}>指定しない</button>
+                      <button type="button" onClick={() => {setAgeband("10"); setStep(4);}}>10代(←なくす？？)</button>
+                      <button type="button" onClick={() => {setAgeband("20"); setStep(4);}}>20代</button>
+                      <button type="button" onClick={() => {setAgeband("30"); setStep(4);}}>30代</button>
+                      <button type="button" onClick={() => {setAgeband("40"); setStep(4);}}>40代</button>
+                      <button type="button" onClick={() => {setAgeband("50"); setStep(4);}}>50代以上</button>
+                    </div>
+                  )}
+
+                  {step === 4 && (
+                    <div>
+                      <p>関係性は？</p>
+
+                      <button type="button" onClick={() => {setRelationship(""); setStep(5);}}>指定しない</button>
+                      <button type="button" onClick={() => {setRelationship("manager"); setStep(5);}}>上司</button>
+                      <button type="button" onClick={() => {setRelationship("senior"); setStep(5);}}>先輩</button>
+                      <button type="button" onClick={() => {setRelationship("colleague"); setStep(5);}}>同僚</button>
+                      <button type="button" onClick={() => {setRelationship("junior"); setStep(5);}}>後輩</button>
+                    </div>
+                  )}
+
+                  {step === 5 && (
+                    <div>
+                      <p>相手の好みを知っていますか？</p>
+
+                      <button type="button" onClick={() => {setStep(6);}}>知っている</button>
+                      <button type="button" onClick={() => {setStep(100);}}>知らない</button>
+                    </div>
+                  )}
+
+                  {step === 6 && (
+                    <div>
+                      <p>相手の好みを入力してください</p>
+
+                      <input className="q" value={likes} onChange={(e) => setLikes(e.target.value)} placeholder="好きなもの（例：紅茶 ジュース）" />
+                      <input className="q" value={dislikes} onChange={(e) => setDislikes(e.target.value)} placeholder="嫌いなもの（例：ビール コーヒー）" />
+
+                      <button type="submit">おすすめを見る</button>
+                    </div>
+                  )}
+
+                  {step === 100 && (
+                    <div>
+                      <p>好みに左右されにくいギフトを探しますか？</p>
+
+                      <button type="button" onClick={() => {setStep(101);}}>はい</button>
+                      <button type="button" onClick={() => {runSearch();}}>いいえ</button>
+                    </div>
+                  )}
+
+                  {step === 101 && (
+                    <div>
+                      <p>好みに左右されにくいギフトを探します</p>
+                      <p>当てはまるものを選んでください（複数選択可）</p>
+
+                      <label className="chk"><input type="checkbox" checked={mildScent} onChange={(e) => setMildScent(e.target.checked)}/>香りが弱いほうがいい</label>
+                      <label className="chk"><input type="checkbox" checked={indivWrap} onChange={(e) => setIndivWrap(e.target.checked)}/>個包装がいい</label>
+                      <label className="chk"><input type="checkbox" checked={nonFood} onChange={(e) => setNonFood(e.target.checked)}/>食べ物以外がいい</label>
+
+                      <button type="button" onClick={runSearch}>おすすめを見る</button>
+                    </div>
+                  )}
           </div>
+        )}       
+        
+        {mode !== "farewell" && (
+          <button type="submit">検索</button>
         )}
-        <button type="submit">検索</button>
       </form>
 
-      <button type="button" onClick={onReset}>
-        リセット
-      </button>
+      {mode !== "farewell" && (
+        <button type="button" onClick={onReset}>リセット</button>
+      )}
 
       {loading && <p className="summary">🔍 検索中...</p>}{/*【自分で追加】setloadingがtrueで出現*/}
 
