@@ -21,7 +21,7 @@ app = FastAPI(title="Giftia Search API（2週目）")
 GENDER_VALUE = {"male": 1, "female": 2}   # DB: 0=共通, 1=男性, 2=女性 　11/15_かずや
 NON_FOOD_CATEGORIES = ["食品", "飲料", "酒類"]   # non_food で除外するカテゴリー
 RELATIONSHIP_LABEL = {"manager": "上司", "senior": "先輩", "colleague": "同僚", "junior": "後輩"}
-
+RELATIONSHIP_VALUE = {"manager": 1, "senior": 2, "colleague": 3, "junior": 4}   # DB: attribute_type='relationship'
 
 # ── CORS ───────────────────────────────────────
 # 画面（http://localhost:3000）と API（http://localhost:8000）は別のアプリ＝オリジンが違う。
@@ -82,6 +82,11 @@ def search(
         WHERE t.product_id = products.product_id
         AND t.attribute_type = 'age' AND t.attribute_value = %s)""")
         params.append(int(ageband))
+    if relationship:
+        where.append("""EXISTS (SELECT 1 FROM product_recommend_tag t
+        WHERE t.product_id = products.product_id
+        AND t.attribute_type = 'relationship' AND t.attribute_value = %s)""")
+        params.append(RELATIONSHIP_VALUE[relationship])
     if mild_scent:
         where.append("""NOT EXISTS (SELECT 1 FROM product_farewell_features f
         WHERE f.product_id = products.product_id AND f.is_scented = 1)""")
@@ -109,7 +114,7 @@ def search(
         (*params, limit),
     )
     # ③ DB の行を、画面の Gift 型（1週目）に詰め替えて返す
-    reason = build_reason(gender, ageband, relationship, likes, dislikes)
+    reason = build_reason(gender, ageband, relationship, likes, dislikes,indiv_wrap, mild_scent, non_food)
     return {"total": total, "results": [to_gift(r, reason) for r in rows]}
 
 def to_gift(r: dict, reason: str = "") -> dict:
@@ -125,8 +130,8 @@ def to_gift(r: dict, reason: str = "") -> dict:
         "reason": reason,
     }
 
-def build_reason(gender: str, ageband: str, relationship: str, likes: str, dislikes: str) -> str:
-    # 相手の説明を作る(例: 20代男性の先輩 / 先輩 / 20代)
+def build_reason(gender: str, ageband: str, relationship: str, likes: str, dislikes: str,indiv_wrap: bool, mild_scent: bool, non_food: bool) -> str:
+    # 相手の説明(例: 20代男性の上司)  ← ここは今のまま
     target = ""
     if ageband:
         target += f"{ageband}代"
@@ -139,14 +144,28 @@ def build_reason(gender: str, ageband: str, relationship: str, likes: str, disli
             target += "の"
         target += RELATIONSHIP_LABEL[relationship]
 
-    parts = []
+    # 文1:誰向けか
+    who = []
     if target:
-        parts.append(f"{target}向け")
+        who.append(f"{target}向け")
     if likes:
-        parts.append(f"{likes}がお好きな方向け")
-    if dislikes:
-        parts.append(f"{dislikes}を含まない")
+        who.append(f"{likes}がお好きな方向け")
 
-    if not parts:
+    # 文2:適用した条件
+    conds = []
+    if indiv_wrap:
+        conds.append("個包装")
+    if mild_scent:
+        conds.append("香り付きの商品を除外")
+    if non_food:
+        conds.append("食品・飲料・酒類を除外")
+    if dislikes:
+        conds.append(f"{dislikes}を含む商品を除外")
+
+    if not who and not conds:
         return ""   # 条件が1つもないときは理由を出さない
-    return "、".join(parts) + "送別ギフトです。"
+
+    text = ("、".join(who) + "の" if who else "") + "送別ギフトです。"
+    if conds:
+        text += "条件:" + "・".join(conds) + "。"
+    return text
