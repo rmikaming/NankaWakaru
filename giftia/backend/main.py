@@ -19,6 +19,7 @@ load_dotenv()  # .env を読む（DB の接続情報・CORS の許可）
 
 app = FastAPI(title="Giftia Search API（2週目）")
 GENDER_VALUE = {"male": 1, "female": 2}   # DB: 0=共通, 1=男性, 2=女性 　11/15_かずや
+NON_FOOD_CATEGORIES = ["食品", "飲料", "酒類"]   # non_food で除外するカテゴリー
 
 # ── CORS ───────────────────────────────────────
 # 画面（http://localhost:3000）と API（http://localhost:8000）は別のアプリ＝オリジンが違う。
@@ -46,7 +47,8 @@ def search(
     ageband: Literal["", "10", "20", "30", "40", "50"] = Query(default="", description="年代"),#引数の追加:11/15_かずや
     likes: str = Query(default="", description="好きなもの(空白区切り。送別)"),
     dislikes: str = Query(default="", description="嫌いなもの(空白区切り。除外する。送別)"),
-
+    mild_scent: bool = Query(default=False, description="true なら、香り付きと分かっている商品を除外(送別)"),
+    non_food: bool = Query(default=False, description="true なら、食品・飲料・酒類を除外(送別)"),
     limit: int = Query(default=20, ge=1, le=100, description="返す件数"),
 ):
     """条件に合う商品を、人気順（直近1年の販売数）で上位 limit 件返す"""
@@ -77,6 +79,14 @@ def search(
         WHERE t.product_id = products.product_id
         AND t.attribute_type = 'age' AND t.attribute_value = %s)""")
         params.append(int(ageband))
+    if mild_scent:
+        where.append("""NOT EXISTS (SELECT 1 FROM product_farewell_features f
+        WHERE f.product_id = products.product_id AND f.is_scented = 1)""")
+    if non_food:
+        marks = ", ".join(["%s"] * len(NON_FOOD_CATEGORIES))
+        where.append(f"category NOT IN ({marks})")
+        params += NON_FOOD_CATEGORIES
+
     for word in dislikes.split():
         where.append("""(COALESCE(product_name, '') NOT LIKE %s
         AND COALESCE(brand, '') NOT LIKE %s

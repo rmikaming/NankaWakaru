@@ -48,8 +48,8 @@ export async function searchGifts(c: SearchCondition): Promise<Gift[]> {
   if (c.relationship) params.set("relationship", c.relationship);
   if (c.likes) params.set("likes", c.likes);
   if (c.dislikes) params.set("dislikes", c.dislikes);
-  if (c.mildScent) params.set("mildScent", "true");
-  if (c.nonFood) params.set("nonFood", "true");
+  if (c.mildScent) params.set("mild_scent", "true");
+  if (c.nonFood) params.set("non_food", "true");
 
   // ② fetch で API を呼ぶ（通信が終わるまで待つ＝await）
   const res = await fetch(`${API}/api/search?${params.toString()}`);
