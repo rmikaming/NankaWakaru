@@ -18,3 +18,17 @@ body { margin:0; font-family:"Hiragino Sans","Yu Gothic","Meiryo",sans-serif; co
 .card .name { font-size:16px; margin:4px 0; }
 .card .price { font-size:18px; font-weight:700; margin:4px 0; }
 .card .meta { color:var(--sub); font-size:13px; margin:2px 0; }
+.farewell-container { display: flex; justify-content: center; padding: 32px; }
+.question-card { width: 700px; max-width: 700px; background: #e9d5ff; border-radius: 24px; padding: 40px; box-shadow: 0 12px 32px rgba(139,92,246,0.15); }
+.question-card h2 { font-size: 28px; font-weight: 700; text-align: center; margin-bottom: 12px; }
+.question-card .q { width: 100%; display: block; margin-bottom: 12px; padding: 14px 16px; border: 1px solid #d8ccff; border-radius: 12px; font-size: 16px; background: #fff; }
+.question-card button { width: 100%; padding: 14px 16px; margin-bottom: 12px; background: #faf8ff; border: 1px solid #d8ccff; border-radius: 16px; font-size: 17px; font-weight: 500; color: #4b5563; }
+.question-card button:hover { background: #f3eeff; border-color: #8b5cf6; }
+.question-card button.cta { background: #8b5cf6; color: #fff; border: none; }
+.question-card button.cta:hover { background: #7c3aed; border: none; }
+.question-card button.selected {  background: #f3e8ff; color: #7c3aed; border-color: #a78bfa; }
+.question-subtitle { text-align: center; color: #666; margin-bottom: 36px; font-size: 14px; }
+.question-step { text-align: center; color: #8b5cf6; font-weight: 600; margin-bottom: 12px; font-size: 14px; }
+.chk { display: flex; align-items: center; padding: 14px 16px; margin-bottom: 10px; background: #fff; border: 1px solid #d8ccff; border-radius: 12px; cursor: pointer; }
+.chk input { margin-right: 10px; }
+.back-btn { width: auto !important; background: transparent !important; border: none !important; color: #8b5cf6 !important; font-size: 14px !important; margin-bottom: 16px; padding: 0 !important; text-align: left; }
