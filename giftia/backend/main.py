@@ -44,6 +44,9 @@ def search(
     price_max: int | None = Query(default=None, ge=0, description="価格の上限（以下）"),
     gender: Literal["all", "male", "female"] = Query(default="all", description="性別"),#引数の追加:11/15_かずや
     ageband: Literal["", "10", "20", "30", "40", "50"] = Query(default="", description="年代"),#引数の追加:11/15_かずや
+    likes: str = Query(default="", description="好きなもの(空白区切り。送別)"),
+    dislikes: str = Query(default="", description="嫌いなもの(空白区切り。除外する。送別)"),
+
     limit: int = Query(default=20, ge=1, le=100, description="返す件数"),
 ):
     """条件に合う商品を、人気順（直近1年の販売数）で上位 limit 件返す"""
@@ -74,6 +77,12 @@ def search(
         WHERE t.product_id = products.product_id
         AND t.attribute_type = 'age' AND t.attribute_value = %s)""")
         params.append(int(ageband))
+    for word in dislikes.split():
+        where.append("""(COALESCE(product_name, '') NOT LIKE %s
+        AND COALESCE(brand, '') NOT LIKE %s
+        AND COALESCE(description, '') NOT LIKE %s)""")
+        params += [f"%{word}%"] * 3
+
 
     condition = " AND ".join(where)
 
