@@ -20,6 +20,8 @@ load_dotenv()  # .env を読む（DB の接続情報・CORS の許可）
 app = FastAPI(title="Giftia Search API（2週目）")
 GENDER_VALUE = {"male": 1, "female": 2}   # DB: 0=共通, 1=男性, 2=女性 　11/15_かずや
 NON_FOOD_CATEGORIES = ["食品", "飲料", "酒類"]   # non_food で除外するカテゴリー
+RELATIONSHIP_LABEL = {"manager": "上司", "senior": "先輩", "colleague": "同僚", "junior": "後輩"}
+
 
 # ── CORS ───────────────────────────────────────
 # 画面（http://localhost:3000）と API（http://localhost:8000）は別のアプリ＝オリジンが違う。
@@ -45,6 +47,7 @@ def search(
     price_max: int | None = Query(default=None, ge=0, description="価格の上限（以下）"),
     gender: Literal["all", "male", "female"] = Query(default="all", description="性別"),#引数の追加:11/15_かずや
     ageband: Literal["", "10", "20", "30", "40", "50"] = Query(default="", description="年代"),#引数の追加:11/15_かずや
+    relationship: Literal["", "manager", "senior", "colleague", "junior"] = Query(default="", description="関係性(送別)"),
     likes: str = Query(default="", description="好きなもの(空白区切り。送別)"),
     dislikes: str = Query(default="", description="嫌いなもの(空白区切り。除外する。送別)"),
     mild_scent: bool = Query(default=False, description="true なら、香り付きと分かっている商品を除外(送別)"),
@@ -106,10 +109,10 @@ def search(
         (*params, limit),
     )
     # ③ DB の行を、画面の Gift 型（1週目）に詰め替えて返す
-    return {"total": total, "results": [to_gift(r) for r in rows]}
+    reason = build_reason(gender, ageband, relationship, likes, dislikes)
+    return {"total": total, "results": [to_gift(r, reason) for r in rows]}
 
-
-def to_gift(r: dict) -> dict:
+def to_gift(r: dict, reason: str = "") -> dict:
     """DB の列名 → 画面（lib/api.ts の Gift 型）の項目名。画面側は1週目のまま変えない"""
     return {
         "id": r["product_id"],
@@ -119,4 +122,31 @@ def to_gift(r: dict) -> dict:
         "price": r["price"],
         "rating": float(r["rating"]) if r["rating"] is not None else 0,  # レビューなしは 0
         "reviewCount": r["review_count"],
+        "reason": reason,
     }
+
+def build_reason(gender: str, ageband: str, relationship: str, likes: str, dislikes: str) -> str:
+    # 相手の説明を作る(例: 20代男性の先輩 / 先輩 / 20代)
+    target = ""
+    if ageband:
+        target += f"{ageband}代"
+    if gender == "female":
+        target += "女性"
+    elif gender == "male":
+        target += "男性"
+    if relationship:
+        if target:
+            target += "の"
+        target += RELATIONSHIP_LABEL[relationship]
+
+    parts = []
+    if target:
+        parts.append(f"{target}向け")
+    if likes:
+        parts.append(f"{likes}がお好きな方向け")
+    if dislikes:
+        parts.append(f"{dislikes}を含まない")
+
+    if not parts:
+        return ""   # 条件が1つもないときは理由を出さない
+    return "、".join(parts) + "送別ギフトです。"
