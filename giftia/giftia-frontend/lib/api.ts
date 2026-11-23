@@ -12,6 +12,7 @@ export type Gift = {
   price: number;       // 価格（円）
   rating: number;      // レビューの平均
   reviewCount: number; // レビュー件数
+  reason?: string;//選定理由（送別）
 };
 
 // 画面から渡す検索条件（2つのタブの分をまとめて持つ）
