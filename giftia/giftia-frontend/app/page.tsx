@@ -151,7 +151,6 @@ export default function Home() {
                       </div>
 
                       <button type="button" className={ageband === "" ? "selected" : ""} onClick={() => {setAgeband(""); setStep(4); }}>指定しない</button>
-                      <button type="button" className={ageband === "10" ? "selected" : ""} onClick={() => {setAgeband("10"); setStep(4); }}>10代（←なくす？）</button>
                       <button type="button" className={ageband === "20" ? "selected" : ""} onClick={() => {setAgeband("20"); setStep(4); }}>20代</button>
                       <button type="button" className={ageband === "30" ? "selected" : ""} onClick={() => {setAgeband("30"); setStep(4); }}>30代</button>
                       <button type="button" className={ageband === "40" ? "selected" : ""} onClick={() => {setAgeband("40"); setStep(4); }}>40代</button>
