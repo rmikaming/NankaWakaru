@@ -104,98 +104,138 @@ export default function Home() {
           </>
         )}
         {mode === "farewell" && (
-          <div>
+          <div className="farewell-container">
+            <div className="question-card">
 
 {/*ここから追加分 */}
 
                 {step === 1 && (
                   <div>
-                    <p>予算は？</p>
-
-                    <button type="button" onClick={() => {setPriceBand(""); setStep(2);}}>すべての価格帯</button>
-                    <button type="button" onClick={() => {setPriceBand("0"); setStep(2);}}>〜3,000円</button>
-                    <button type="button" onClick={() => {setPriceBand("3000"); setStep(2);}}>3,000〜5,000円</button>
-                    <button type="button" onClick={() => {setPriceBand("5000"); setStep(2);}}>5,000〜10,000円</button>
-                    <button type="button" onClick={() => {setPriceBand("10000"); setStep(2);}}>10,000〜</button>
+                    <div className="question-header">
+                      <div className="question-step">質問 1 / 6</div>
+                      <h2>－予算を教えてください－</h2>
+                      <p className="question-subtitle">送別ギフトの予算を選んでください</p>
+                    </div>
+                    <button type="button" className={priceBand === "" ? "selected" : ""} onClick={() => {setPriceBand(""); setStep(2); }}>すべての価格帯</button>
+                    <button type="button" className={priceBand === "0" ? "selected" : ""} onClick={() => {setPriceBand("0"); setStep(2); }}>〜3,000円</button>
+                    <button type="button" className={priceBand === "3000" ? "selected" : ""} onClick={() => {setPriceBand("3000"); setStep(2); }}>3,000〜5,000円</button>
+                    <button type="button" className={priceBand === "5000" ? "selected" : ""} onClick={() => {setPriceBand("5000"); setStep(2); }}>5,000〜10,000円</button>
+                    <button type="button" className={priceBand === "10000" ? "selected" : ""} onClick={() => {setPriceBand("10000"); setStep(2); }}>10,000円〜</button>
+                    {/*<button type="button" onClick={() => {setPriceBand(""); setStep(2);}}>すべての価格帯</button>//備忘録にとっときます。。*/}
                   </div>
                 )}
 
                 {step === 2 && (
                   <div>
-                    <p>相手の性別は？</p>
 
-                    <button type="button" onClick={() => {setGender("all"); setStep(3);}}>指定しない</button>
-                    <button type="button" onClick={() => {setGender("male"); setStep(3);}}>男性</button>
-                    <button type="button" onClick={() => {setGender("female"); setStep(3);}}>女性</button>
+                    <div className="question-header">
+                      <button type="button" className="back-btn" onClick={() => setStep(1)}>← 戻る</button>
+                      <div className="question-step">質問 2 / 6</div>
+                      <h2>－相手の性別を教えてください－</h2>
+                      <p className="question-subtitle">送別ギフトを贈る相手の性別を選んでください</p>
+                    </div>
+
+                    <button type="button" className={gender === "all" ? "selected" : ""} onClick={() => {setGender("all"); setStep(3); }}>指定しない</button>
+                    <button type="button" className={gender === "male" ? "selected" : ""} onClick={() => {setGender("male"); setStep(3); }}>男性</button>
+                    <button type="button" className={gender === "female" ? "selected" : ""} onClick={() => {setGender("female"); setStep(3); }}>女性</button>
                   </div>
                 )}
 
                   {step === 3 && (
                     <div>
-                      <p>年齢層は？</p>
+                      <div className="question-header">
+                        <button type="button" className="back-btn" onClick={() => setStep(2)}>← 戻る</button>
+                        <div className="question-step">質問 3 / 6</div>
+                        <h2>－相手の年齢を教えてください－</h2>
+                        <p className="question-subtitle">送別ギフトを贈る相手の年齢を選んでください</p>
+                      </div>
 
-                      <button type="button" onClick={() => {setAgeband(""); setStep(4);}}>指定しない</button>
-                      <button type="button" onClick={() => {setAgeband("10"); setStep(4);}}>10代(←なくす？？)</button>
-                      <button type="button" onClick={() => {setAgeband("20"); setStep(4);}}>20代</button>
-                      <button type="button" onClick={() => {setAgeband("30"); setStep(4);}}>30代</button>
-                      <button type="button" onClick={() => {setAgeband("40"); setStep(4);}}>40代</button>
-                      <button type="button" onClick={() => {setAgeband("50"); setStep(4);}}>50代以上</button>
+                      <button type="button" className={ageband === "" ? "selected" : ""} onClick={() => {setAgeband(""); setStep(4); }}>指定しない</button>
+                      <button type="button" className={ageband === "10" ? "selected" : ""} onClick={() => {setAgeband("10"); setStep(4); }}>10代（←なくす？）</button>
+                      <button type="button" className={ageband === "20" ? "selected" : ""} onClick={() => {setAgeband("20"); setStep(4); }}>20代</button>
+                      <button type="button" className={ageband === "30" ? "selected" : ""} onClick={() => {setAgeband("30"); setStep(4); }}>30代</button>
+                      <button type="button" className={ageband === "40" ? "selected" : ""} onClick={() => {setAgeband("40"); setStep(4); }}>40代</button>
+                      <button type="button" className={ageband === "50" ? "selected" : ""} onClick={() => {setAgeband("50"); setStep(4); }}>50代以上</button>
                     </div>
                   )}
 
                   {step === 4 && (
                     <div>
-                      <p>関係性は？</p>
+                      <div className="question-header">
+                        <button type="button" className="back-btn" onClick={() => setStep(3)}>← 戻る</button>
+                        <div className="question-step">質問 4 / 6</div>
+                        <h2>－相手との関係性を教えてください－</h2>
+                        <p className="question-subtitle">送別ギフトを贈る相手の関係を選んでください</p>
+                      </div>
 
-                      <button type="button" onClick={() => {setRelationship(""); setStep(5);}}>指定しない</button>
-                      <button type="button" onClick={() => {setRelationship("manager"); setStep(5);}}>上司</button>
-                      <button type="button" onClick={() => {setRelationship("senior"); setStep(5);}}>先輩</button>
-                      <button type="button" onClick={() => {setRelationship("colleague"); setStep(5);}}>同僚</button>
-                      <button type="button" onClick={() => {setRelationship("junior"); setStep(5);}}>後輩</button>
+                      <button type="button" className={relationship === "" ? "selected" : ""} onClick={() => {setRelationship(""); setStep(5); }}>指定しない</button>
+                      <button type="button" className={relationship === "manager" ? "selected" : ""} onClick={() => {setRelationship("manager"); setStep(5); }}>上司</button>
+                      <button type="button" className={relationship === "senior" ? "selected" : ""} onClick={() => {setRelationship("senior"); setStep(5); }}>先輩</button>
+                      <button type="button" className={relationship === "colleague" ? "selected" : ""} onClick={() => {setRelationship("colleague"); setStep(5); }}>同僚</button>
+                      <button type="button" className={relationship === "junior" ? "selected" : ""} onClick={() => {setRelationship("junior"); setStep(5); }}>後輩</button>
                     </div>
                   )}
 
                   {step === 5 && (
                     <div>
-                      <p>相手の好みを知っていますか？</p>
+                    <div className="question-header">
+                      <button type="button" className="back-btn" onClick={() => setStep(4)}>← 戻る</button>
+                      <div className="question-step">質問 5 / 6</div>
+                      <h2>－相手の好みを知っていますか－</h2>
+                      <p className="question-subtitle">送別ギフトを贈る相手の好みを知っていますか</p>
+                    </div>
 
-                      <button type="button" onClick={() => {setStep(6);}}>知っている</button>
-                      <button type="button" onClick={() => {setStep(100);}}>知らない</button>
+                      <button type="button" onClick={() => {setStep(6);}}>相手の好みを知っている</button>
+                      <button type="button" onClick={() => {setStep(100);}}>相手の好みを知らない</button>
                     </div>
                   )}
 
                   {step === 6 && (
                     <div>
-                      <p>相手の好みを入力してください</p>
+                      <div className="question-header">
+                        <button type="button" className="back-btn" onClick={() => setStep(5)}>← 戻る</button>
+                        <div className="question-step">質問 6 / 6</div>
+                        <h2>－相手の好みを教えてください－</h2>
+                        <p className="question-subtitle">送別ギフトを贈る相手の好みを入力してください</p>
+                      </div>
 
                       <input className="q" value={likes} onChange={(e) => setLikes(e.target.value)} placeholder="好きなもの（例：紅茶 ジュース）" />
                       <input className="q" value={dislikes} onChange={(e) => setDislikes(e.target.value)} placeholder="嫌いなもの（例：ビール コーヒー）" />
 
-                      <button type="submit">おすすめを見る</button>
+                      <button className="cta" type="button" onClick={runSearch}>おすすめを見る</button>
                     </div>
                   )}
 
                   {step === 100 && (
                     <div>
-                      <p>好みに左右されにくいギフトを探しますか？</p>
+                      <div className="question-header">
+                        <button type="button" className="back-btn" onClick={() => setStep(5)}>← 戻る</button>
+                        <div className="question-step">質問 5.5 / 6</div>
+                        <h2>－好みに左右されにくいギフトを探しますか－</h2>
+                      </div>
 
-                      <button type="button" onClick={() => {setStep(101);}}>はい</button>
-                      <button type="button" onClick={() => {runSearch();}}>いいえ</button>
+                      <button type="button" onClick={() => {setStep(101);}}>好みに左右されにくいギフトを探す</button>
+                      <button type="button" onClick={() => {runSearch();}}>好みに左右されにくいギフトを探さない</button>
                     </div>
                   )}
 
                   {step === 101 && (
                     <div>
-                      <p>好みに左右されにくいギフトを探します</p>
-                      <p>当てはまるものを選んでください（複数選択可）</p>
+                      <div className="question-header">
+                        <button type="button" className="back-btn" onClick={() => setStep(100)}>← 戻る</button>
+                        <div className="question-step">質問 6 / 6</div>
+                        <h2>－好みに左右されにくいギフトを探します－</h2>
+                        <p className="question-subtitle">相手の情報が少ない場合は、避けたい条件を選んでください（複数選択可）</p>
+                      </div>
 
                       <label className="chk"><input type="checkbox" checked={mildScent} onChange={(e) => setMildScent(e.target.checked)}/>香りが弱いほうがいい</label>
                       <label className="chk"><input type="checkbox" checked={indivWrap} onChange={(e) => setIndivWrap(e.target.checked)}/>個包装がいい</label>
                       <label className="chk"><input type="checkbox" checked={nonFood} onChange={(e) => setNonFood(e.target.checked)}/>食べ物以外がいい</label>
 
-                      <button type="button" onClick={runSearch}>おすすめを見る</button>
+                      <button className="cta" type="button" onClick={runSearch}>おすすめを見る</button>
                     </div>
                   )}
+            </div>
           </div>
         )}       
         
