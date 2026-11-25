@@ -23,6 +23,17 @@ NON_FOOD_CATEGORIES = ["食品", "飲料", "酒類"]   # non_food で除外す�
 RELATIONSHIP_LABEL = {"manager": "上司", "senior": "先輩", "colleague": "同僚", "junior": "後輩"}
 RELATIONSHIP_VALUE = {"manager": 1, "senior": 2, "colleague": 3, "junior": 4}   # DB: attribute_type='relationship'
 
+# 好きなもの → 一致とみなす類義語（入力された語そのものは expand_like が必ず含める）
+LIKES_SYNONYMS = {
+    "コーヒー": ["珈琲", "ドリップ", "コーヒー豆"],
+    "お茶": ["緑茶", "紅茶", "ほうじ茶"],
+}
+
+
+def expand_like(word: str) -> list[str]:
+    """入力語 + 類義語のリストを返す"""
+    return [word] + LIKES_SYNONYMS.get(word, [])
+
 # ── CORS ───────────────────────────────────────
 # 画面（http://localhost:3000）と API（http://localhost:8000）は別のアプリ＝オリジンが違う。
 # ブラウザは既定で「別オリジンへの通信」を止めるので、API 側が「この画面からは受け付ける」と宣言する。
@@ -42,7 +53,7 @@ def health():
 def search(
     q: str = Query(default="", description="キーワード（空白区切りで複数。すべてを含む商品）"),
     category: str = Query(default="", description="カテゴリー（空ならすべて）"),
-    indiv_wrap: bool = Query(default=False, description="true なら、説明文に「個包装」とある商品だけ"),
+    indiv_wrap: bool = Query(default=False, description="true なら、個包装と確認できている商品だけ(送別)"),
     price_min: int | None = Query(default=None, ge=0, description="価格の下限（以上）"),
     price_max: int | None = Query(default=None, ge=0, description="価格の上限（以下）"),
     gender: Literal["all", "male", "female"] = Query(default="all", description="性別"),#引数の追加:11/15_かずや
@@ -57,6 +68,10 @@ def search(
     """条件に合う商品を、人気順（直近1年の販売数）で上位 limit 件返す"""
     # ① 条件を WHERE に1つずつ足す（値は %s で渡し、SQL の文字列に直接つなげない）
     where, params = ["stock > 0"], []  # 在庫切れは出さない
+    where.append("""EXISTS (SELECT 1 FROM product_scenes s
+    WHERE s.product_id = products.product_id AND s.scene_tag = %s)""")
+    params.append("送別")
+
     for word in q.split():  # 【穴1】q を空白で区切って1語ずつにする（文字列のメソッド）
         where.append("(product_name LIKE %s OR brand LIKE %s OR description LIKE %s)")
         params += [f"%{word}%"] * 3
@@ -64,8 +79,8 @@ def search(
         where.append("category = %s")
         params.append(category)  # 【穴2】%s に入れる値（受け取ったカテゴリー）
     if indiv_wrap:
-        where.append("description LIKE %s")  # 「個包装」は列がないので、説明文に書いてあるかで見る
-        params.append("%個包装%")  # 【穴3】「個包装」をどこかに含む、という LIKE のパターン
+        where.append("""EXISTS (SELECT 1 FROM product_farewell_features f
+        WHERE f.product_id = products.product_id AND f.is_individually_wrapped = 1)""")
     if price_min is not None:
         where.append("price >= %s")
         params.append(price_min)
@@ -101,21 +116,41 @@ def search(
         AND COALESCE(description, '') NOT LIKE %s)""")
         params += [f"%{word}%"] * 3
 
+    # likes：一致する商品を上位に（絞り込みはしない＝優先表示）
+    likes_words = likes.split()
+    like_terms = [t for w in likes_words for t in expand_like(w)]   # 入力語＋類義語を全部ならべる
+    order_sql = "sales_count DESC, product_id"
+    order_params = []
+    if like_terms:
+        hit = " OR ".join(
+            ["(product_name LIKE %s OR category LIKE %s OR description LIKE %s)"] * len(like_terms)
+        )
+        order_sql = f"CASE WHEN {hit} THEN 0 ELSE 1 END, " + order_sql
+        for term in like_terms:
+            order_params += [f"%{term}%"] * 3
 
     condition = " AND ".join(where)
 
     # ② 件数と、人気順の上位 limit 件を取る
     total = fetch_all(f"SELECT COUNT(*) AS n FROM products WHERE {condition}", tuple(params))[0]["n"]
     rows = fetch_all(
-        f"""SELECT product_id, category, brand, product_name, price, rating, review_count
+        f"""SELECT product_id, category, brand, product_name, description, price, rating, review_count
             FROM products WHERE {condition}
-            ORDER BY sales_count DESC, product_id
+            ORDER BY {order_sql}
             LIMIT %s""",
-        (*params, limit),
+        (*params, *order_params, limit),
     )
-    # ③ DB の行を、画面の Gift 型（1週目）に詰め替えて返す
-    reason = build_reason(gender, ageband, relationship, likes, dislikes,indiv_wrap, mild_scent, non_food)
-    return {"total": total, "results": [to_gift(r, reason) for r in rows]}
+
+    # ③ 商品ごとに、likes に一致した語だけを理由に使う
+    results = []
+    for r in rows:
+        text = " ".join(str(r.get(k) or "") for k in ("product_name", "category", "description")).lower()
+        matched = " ".join(
+            w for w in likes_words if any(t.lower() in text for t in expand_like(w))
+        )
+        reason = build_reason(gender, ageband, relationship, matched, dislikes, indiv_wrap, mild_scent, non_food)
+        results.append(to_gift(r, reason))
+    return {"total": total, "results": results}
 
 def to_gift(r: dict, reason: str = "") -> dict:
     """DB の列名 → 画面（lib/api.ts の Gift 型）の項目名。画面側は1週目のまま変えない"""
