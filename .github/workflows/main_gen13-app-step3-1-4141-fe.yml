@@ -32,9 +32,12 @@ jobs:
           node-version: '24.x'
 
       - name: npm install, build, and test
+        working-directory: giftia/giftia-frontend
         env:
           NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
         run: |
+          pwd
+          ls-la
           npm install
           npm run build --if-present
           npm run test --if-present
