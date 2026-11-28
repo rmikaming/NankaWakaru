@@ -9,7 +9,7 @@ on:
     branches:
       - 'main'
     paths:
-      - 'backend/**'
+      - 'giftia/backend/**'
       - '.github/workflows/main_func-gen13-step3-4141.yml'
 
   workflow_dispatch:
@@ -24,7 +24,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: backend
+        working-directory: giftia/backend
 
     permissions:
       contents: read #This is required for actions/checkout
