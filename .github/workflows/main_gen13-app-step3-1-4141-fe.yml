@@ -9,7 +9,7 @@ on:
       - 'main'
     paths:
       - 'giftia/giftia-frontend/**'
-      - '.github/workflows/main_teamXX-web.yml'
+      - '.github/workflows/main_gen13-app-step3-1-4141-fe.yml'
 
   workflow_dispatch:
 
