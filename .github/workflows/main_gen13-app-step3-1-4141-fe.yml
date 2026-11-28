@@ -36,8 +36,12 @@ jobs:
         env:
           NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
         run: |
+          echo "Current directory:"
           pwd
+          echo "Files:"
           ls-la
+          echo "Checking package.json:"
+          test -f package.json
           npm install
           npm run build --if-present
           npm run test --if-present
