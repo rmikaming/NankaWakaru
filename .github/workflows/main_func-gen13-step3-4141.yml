@@ -55,7 +55,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: python-app
-          path: release.zip
+          path: giftia/release.zip
 
   deploy:
     runs-on: ubuntu-latest
