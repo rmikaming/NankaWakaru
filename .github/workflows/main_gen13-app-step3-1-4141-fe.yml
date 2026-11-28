@@ -21,7 +21,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: giftia-frontend
+        working-directory: giftia/giftia-frontend
 
     steps:
       - uses: actions/checkout@v4
@@ -45,7 +45,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: .
+          path: giftia/release.zip
 
   deploy:
     runs-on: ubuntu-latest
